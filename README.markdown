@@ -1,4 +1,4 @@
-# nifpp: C++11 wrapper for Erlang NIF API
+# nifpp: C++11 Wrapper for Erlang NIF API
 
 ## Introduction
 
@@ -115,7 +115,7 @@ String are represented by `std::string`.  Examples:
 	ERL_NIF_TERM term = make(env, “hello world”);
 	
 	// make() example 2:
-	std:: string a(“hello world”);
+	std::string a(“hello world”);
 	ERL_NIF_TERM term = make(env, a);
 
 ### Atoms
@@ -141,13 +141,13 @@ nifpp represents atoms by the type `str_atom`, which is a thin wrapper around `s
 
 Tuples are represented by the C++11 type `std::tuple`.  Tuples-of-references are a powerful method for cracking and packing Erlang tuple terms.  Examples:
 
-	// crack simple tuple using tuple-of-references
+	// crack simple tuple {hello, 14} using tuple-of-references
 	str_atom a;
 	int b;
 	auto tup = std::make_tuple( std::ref(a), std::ref(b) );
 	get_throws(env, term, tup);
 	
-	// crack nested tuple using tuple-of-references
+	// crack nested tuple {hello, 14, {10,4}} using tuple-of-references
 	str_atom a;
 	int b;
 	int c;
@@ -159,13 +159,13 @@ Tuples are represented by the C++11 type `std::tuple`.  Tuples-of-references are
 
 `std::tie()` offers syntactic sugar for composing a tuple-of-references.  Note that the result of `std::tie()` is not a reference, so it cannot be used in the top-level tuple in the nested tuple example.  Examples:
 
-	// crack simple tuple using tuple-of-references [using std::tie()]
+	// crack simple tuple {hello, 14} using tuple-of-references [using std::tie()]
 	str_atom a;
 	int b;
 	auto tup = std::tie( a, b );
 	get_throws(env, term, tup);
 	
-	// crack nested tuple using tuple-of-references [using std::tie()]
+	// crack nested tuple {hello, 14, {10,4}} using tuple-of-references [using std::tie()]
 	str_atom a;
 	int b;
 	int c;
@@ -192,17 +192,17 @@ If you want to use `std::tuple` for the C++ side of your code, you can use regul
 
 And here are some examples of tuple packing...
 
+	ERL_NIF_TERM term;
 	str_atom a(“hello”);
 	int b(4);
-	ERL_NIF_TERM term;
 	term = make(env, std::make_tuple(a,b));
 	
 	ERL_NIF_TERM term;
-	term = make(env, std::make_tuple(str_atom(“hello”), 4)) ;
-	
-	ERL_NIF_TERM term;
 	auto tup = std::make_tuple(str_atom(“hello”), 4);
-	term = make(env, tup) ;
+	term = make(env, tup);
+
+	ERL_NIF_TERM term = make(env, std::make_tuple(str_atom(“hello”), 4));
+	
 	
 
 
@@ -255,15 +255,13 @@ TBA
 
 ### Extending get()/make()
 
-Under Construction
+Under Construction (there issues with function definition order that need to be worked out)
 
 You can define `get()` and `make()` for any additional type that you wish in your own code.  That type may then be used in other composite types like `std::tuple` and `std::vector`.  Wrappers `void get_throws()` and `void get()` will automatically wrap it.  To reiterate, the following functions should be implemented for your type:
 
 	bool get(ErlNifEnv *env, ERL_NIF_TERM term, T &var);
 	ERL_NIF_TERM make(ErlNifEnv *env, const T &var);
 	
-[add these in nifpp namespace? needs tests]
-
 ## Resources
 
 Nifpp allows any C++ type to be used as a resource.  All resource types must be registered using:
@@ -280,9 +278,9 @@ Nifpp allows any C++ type to be used as a resource.  All resource types must be 
 
 This function does a number of things:
 
-1. Create static storage for `ErlNifResourceType pointer` (sp?)
+1. Create static storage for `ErlNifResourceType` pointer.
 2. Create a resource destructor that invokes the object’s C++ destructor.
-3. Call `enif_open_resource()`(?) and save result.
+3. Call `enif_open_resource_type()` and save result.
 
 Registrations must appear in the nif module’s `load()` function, for example:
 
@@ -326,7 +324,7 @@ Examples of resource construction:
 	
 Any of the above resources can be made into a term with:
 
-	make(env, ptr);
+	ERL_NIF_TERM term = make(env, ptr);
 
 Also, any of the pointers may be kept around after the NIF call returns.  Be sure to use C++11 copy constructor semantics to prevent superfluous `keep()`/`release(`) calls:
 
@@ -336,7 +334,8 @@ Also, any of the pointers may be kept around after the NIF call returns.  Be sur
 
 Examples of getting objects from resource terms:
 
-	// these are for use within this nif call.
+
+	// these are for use within this nif call only.
 	int *ptr;
 	std::string *ptr;
 	vector<std::string>> *ptr;
@@ -357,8 +356,22 @@ Examples of getting objects from resource terms:
 
 ## Complete examples
 
-TBA
+### Tuple Twiddle
+
+### Memory Mapped Binary Resource
 
 ## Performance
 
-Benchmarks TBA.  In my experience, template code compiled without optimization can be slow.  With gcc I recommend using the -O2 option for decent performance.
+The example programs `tuple_twiddle_cpp.cpp` and `tuple_twiddle_c.c` where benchmarked from `nifpptest.erl`.  When compiled under gcc-4.6.2 with the `-O2` option, the median results were...
+
+- `tuple_twiddle_cpp`: 1803 uSec
+- `tuple_twiddle_c`: 1887 uSec
+
+The nifpp version was marginally faster on most runs of the benchmark.
+
+Without the `-O2` switch the results are...
+
+- `tuple_twiddle_cpp`: 7902 uSec
+- `tuple_twiddle_c`: 1912 uSec
+
+This disparity is typical of template-heavy C++.  The moral here is to always use `-O2` with nifpp.
