@@ -1,0 +1,30 @@
+diff --git a/erts/emulator/beam/erl_nif.h b/erts/emulator/beam/erl_nif.h
+index e5d99dc..b2b12b1 100644
+--- a/erts/emulator/beam/erl_nif.h
++++ b/erts/emulator/beam/erl_nif.h
+@@ -84,16 +84,22 @@ typedef long long ErlNifSInt64;
+ 
+ #ifdef HALFWORD_HEAP_EMULATOR
+ #  define ERL_NIF_VM_VARIANT "beam.halfword" 
+-typedef unsigned int ERL_NIF_TERM;
++typedef unsigned int ERL_NIF_TERM_INT_TYPE;
+ #else
+ #  define ERL_NIF_VM_VARIANT "beam.vanilla" 
+ #  if SIZEOF_LONG == SIZEOF_VOID_P
+-typedef unsigned long ERL_NIF_TERM;
++typedef unsigned long ERL_NIF_TERM_INT_TYPE;
+ #  elif SIZEOF_LONG_LONG == SIZEOF_VOID_P
+-typedef unsigned long long ERL_NIF_TERM;
++typedef unsigned long long ERL_NIF_TERM_INT_TYPE;
+ #  endif
+ #endif
+ 
++#ifdef CPP11_UNIQUE_TERM_TYPE
++enum class ERL_NIF_TERM : ERL_NIF_TERM_INT_TYPE {};
++#else
++typedef ERL_NIF_TERM_INT_TYPE ERL_NIF_TERM;
++#endif
++
+ struct enif_environment_t;
+ typedef struct enif_environment_t ErlNifEnv;
+ 
