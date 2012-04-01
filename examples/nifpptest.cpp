@@ -8,6 +8,7 @@ using std::endl;
 
 using std::ref;
 
+#define NIFPP_INTRUSIVE_UNIT_TEST
 #include "nifpp.h"
 
 
@@ -262,6 +263,46 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
     {
         return make(env, std::make_tuple(tracetype::ctor_cnt, tracetype::dtor_cnt));
     }
+
+    // test binaries
+    else if(cmd=="bin2")
+    {
+        ErlNifBinary ebin;
+        get_throws(env, cmddata, ebin);
+        binary newbin(ebin.size*2);
+        std::memcpy(newbin.data,           ebin.data, ebin.size);
+        std::memcpy(newbin.data+ebin.size, ebin.data, ebin.size);
+
+        // make sure these give compile errors:
+        //binary bincopy = newbin; //error
+        //binary bincopy2(newbin); //error
+        //binary bincopy3(std::move(newbin)); //error
+
+        return make(env, newbin);
+    }
+
+    // verify binary destruction
+    else if(cmd=="binary_release_counter_reset")
+    {
+        binary::release_counter=0;
+        return make(env,str_atom("ok"));
+    }
+    else if(cmd=="binary_release_counter_get")
+    {
+        return make(env,binary::release_counter);
+    }
+    else if(cmd=="bina")
+    {
+        binary a(10);
+        binary b(20);
+        binary c(20);
+        binary d(20);
+        make(env, b);
+        return make(env,str_atom("ok"));
+        // expect 3 release callss
+    }
+
+
 
 #if SIZEOF_LONG != 8
     else if(cmd=="longlongint2")

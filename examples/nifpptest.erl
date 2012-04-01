@@ -175,6 +175,15 @@ tracetyperes_test_() ->
         end
         ].
         
-            
+bin_test_() ->
+    [
+    ?_assertEqual(<<"boatsboats">>, invoke_nif({bin2, <<"boats">>})),
+    fun() ->
+        ?assertEqual(ok, invoke_nif({binary_release_counter_reset,[]})),
+        ?assertEqual(0, invoke_nif({binary_release_counter_get,[]})),
+        ?assertEqual(ok, invoke_nif({bina,[]})),
+        ?assertEqual(3, invoke_nif({binary_release_counter_get,[]}))
+    end
+    ].
             
             

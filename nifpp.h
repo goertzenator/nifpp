@@ -30,6 +30,7 @@
 #define CPP11_UNIQUE_TERM_TYPE
 #include <erl_nif.h>
 
+
 //#include <exception>
 
 #include <string>
@@ -40,6 +41,7 @@
 #include <deque>
 #include <set>
 #include <cassert>
+#include <cstring>
 
 #include <iostream>
 using std::cout;
@@ -58,11 +60,12 @@ public:
 };
 
 
-// under construction
+struct binary;
+ERL_NIF_TERM make(ErlNifEnv *env, binary &var);
 struct binary: public ErlNifBinary
 {
 public:
-    binary(): needs_release(false) {}
+    //binary(): needs_release(false) {}
     binary(size_t _size)
     {
         if(enif_alloc_binary(_size, this))
@@ -75,23 +78,33 @@ public:
         }
     }
 
+#ifdef NIFPP_INTRUSIVE_UNIT_TEST
+    static int release_counter;
+#endif
     ~binary()
     {
         if(needs_release)
+        {
+#ifdef NIFPP_INTRUSIVE_UNIT_TEST
+            release_counter++;
+#endif
             enif_release_binary(this);
+        }
     }
 
-    template<typename U>
-    friend ERL_NIF_TERM make(ErlNifEnv *env, const U &var); // make can set owns_data to false
+    friend ERL_NIF_TERM make(ErlNifEnv *env, binary &var); // make can set owns_data to false
 
 protected:
     bool needs_release;
 
 private:
-    // there's no nice way to keep track of owns_data in copies, so prevent copying
+    // there's no nice way to keep track of owns_data in copies, so just prevent copying
     binary(const binary &src){}
 };
 
+#ifdef NIFPP_INTRUSIVE_UNIT_TEST
+int binary::release_counter=0;
+#endif
 
 class badarg{};
 
@@ -255,16 +268,25 @@ inline ERL_NIF_TERM make(ErlNifEnv *env, const unsigned long var)
 }
 
 
-
-/*
-// Miscellaneous conversions
+// binary and ErlNifBinary
 
 inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary &var)
 {
     return enif_inspect_binary(env, term, &var);
 }
+inline ERL_NIF_TERM make(ErlNifEnv *env, ErlNifBinary &var)
+{
+    return enif_make_binary(env, &var);
+}
+inline ERL_NIF_TERM make(ErlNifEnv *env, binary &var)
+{
+    var.needs_release = false;
+    return enif_make_binary(env, &var);
+}
 
-  */
+
+
+// Miscellaneous conversions
 
 /*    
 // iolist as binary    

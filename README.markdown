@@ -136,6 +136,37 @@ nifpp represents atoms by the type `str_atom`, which is a thin wrapper around `s
 	ERL_NIF_TERM term = make(env, a);
 
 
+### Binaries
+
+ErlNifBinary is directly supported by get()/make(), for Example:
+    
+    // inspect binary
+    ErlNifBinary ebin;
+    get_throws(env, term, ebin);
+    ...inspect contents of ebin...
+    
+    // create binary
+    ErlNifBinary ebin;
+    enif_alloc_binary(2000, &ebin);
+    ...copy data into ebin...
+    ERL_NIF_TERM term = make(env, ebin);
+    
+The type `binary` is also supplied to assist in safe creation of binaries.  `binary` is derived from ErlNifBinary
+and will automatically release the allocated memory if it was never made into a term.  For example:
+    
+    // create binary using "binary" type
+    try
+    {
+        binary nbin(2000);
+        ...copy data into nbin, maybe throw...
+        ERL_NIF_TERM term = make(env, nbin);
+    }
+    catch(...)
+    {} // nbin released here if make() was not called on it.
+    
+    
+    
+
 
 ### Tuples
 
