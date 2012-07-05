@@ -649,7 +649,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
         return ret;
 
     // check for matching arity
-    if(arity != std::tuple_size<std::tuple<Ts...>>::value)
+    if(size_t(arity) != std::tuple_size<std::tuple<Ts...>>::value)
         return 0;
 
     // invoke recursive template to convert all items of tuple
