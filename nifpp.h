@@ -244,7 +244,7 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifUInt64 &var)
 }
 inline ERL_NIF_TERM make(ErlNifEnv *env, const ErlNifUInt64 var)
 {
-    return enif_enif_make_uint64(env, var);
+    return enif_make_uint64(env, var);
 }
 #endif
 
