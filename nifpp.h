@@ -121,6 +121,10 @@ template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &
 template<typename T> ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<T> &var);
 ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<ERL_NIF_TERM> &var);
 
+template<typename T, size_t N> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var);
+template<typename T, size_t N> ERL_NIF_TERM make(ErlNifEnv *env, const std::array<T, N> &var);
+template<size_t N>ERL_NIF_TERM make(ErlNifEnv *env, const std::array<ERL_NIF_TERM, N> &var);
+
 template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var);
 template<typename T> ERL_NIF_TERM make(ErlNifEnv *env, const std::list<T> &var);
 
@@ -762,6 +766,37 @@ ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<T> &var)
     return tail;
 }
 ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<ERL_NIF_TERM> &var)
+{
+    return enif_make_list_from_array(env, &var[0], var.size());
+}
+
+
+template<typename T, size_t N>
+int get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var)
+{
+    unsigned len;
+    int ret = enif_get_list_length(env, term, &len);
+    if(!ret) return 0;
+
+    // arrays are statically sized so size must match.
+    if(size_t(len) != var.size()) return 0;
+
+    int i=0;
+    return list_for_each<T>(env, term, [&var, &i](T item){var[i++] = item;});
+}
+template<typename T, size_t N>
+ERL_NIF_TERM make(ErlNifEnv *env, const std::array<T, N> &var)
+{
+    ERL_NIF_TERM tail;
+    tail = enif_make_list(env, 0);
+    for(auto i=var.rbegin(); i!=var.rend(); i++)
+    {
+        tail = enif_make_list_cell(env, make(env,*i), tail);
+    }
+    return tail;
+}
+template<size_t N>
+ERL_NIF_TERM make(ErlNifEnv *env, const std::array<ERL_NIF_TERM, N> &var)
 {
     return enif_make_list_from_array(env, &var[0], var.size());
 }

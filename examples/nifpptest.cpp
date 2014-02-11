@@ -225,6 +225,24 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
     else if(cmd=="list2cd") { return list2_test<std::set      <std::tuple<int, std::string> > >(env, cmddata); }
     else if(cmd=="list2ce") { return list2_test<std::multiset <std::tuple<int, std::string> > >(env, cmddata); }
 
+    // increment 2nd element of std::array<int, 5>
+    else if(cmd=="stdarray_inc2")
+    {
+        std::array<int, 5> array;
+        get_throws(env, cmddata, array);
+        array[2]++;
+        return make(env, array);
+    }
+
+    // copy 3rd elemend to 2nd  of std::array<ERL_NIF_TERM, 5>
+    else if(cmd=="stdarray_cp32")
+    {
+        std::array<ERL_NIF_TERM, 5> array;
+        get_throws(env, cmddata, array);
+        array[2]=array[3];
+        return make(env, array);
+    }
+
     // basic resource testing
     else if(cmd=="makeresint")
     {

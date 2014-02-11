@@ -142,7 +142,15 @@ list_test_() ->
         ?_assertEqual(lists:sort([{1,"1"},{1,"1"},{2,"2"},{2,"2"},{3,"3"},{3,"3"},{9,"5"},{9,"5"},{16,"4"},{16,"4"}]), lists:sort(invoke_nif({list2ce, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})))
 
         ].
-        
+
+stdarray_test_() ->
+    [
+        ?_assertEqual([1,2,4,5,4], invoke_nif({stdarray_inc2, [1,2,3,5,4]})),
+        ?_assertError(badarg, invoke_nif({stdarray_inc2, [1,2,3,4,5,6]})), % too long
+        ?_assertError(badarg, invoke_nif({stdarray_inc2, [1,2,3,4]})), % too short
+        ?_assertEqual([1,2,5,5,4], invoke_nif({stdarray_cp32, [1,2,3,5,4]}))
+    ].
+
 intres_test_() ->
     [
         fun() ->
