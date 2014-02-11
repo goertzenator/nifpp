@@ -63,6 +63,8 @@ string_test_() ->
     [
         ?_assertEqual( "abcabc", invoke_nif({string2, "abc"})),
         ?_assertEqual( "abc123abc123", invoke_nif({string2, "abc123"})),
+        ?_assertEqual( "abcabc", invoke_nif({string2, <<"abc">>})),
+        ?_assertEqual( "abc123abc123", invoke_nif({string2, <<"abc123">>})),
         ?_assertError( badarg, invoke_nif({string2, 123}))
         ].
         

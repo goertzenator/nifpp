@@ -177,7 +177,19 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
 
     unsigned len;
     int ret = enif_get_list_length(env, term, &len); // full list iteration
-    if(!ret) return 0;
+    if(!ret)
+    {
+        // not a list, try as binary
+        ErlNifBinary bin;
+        ret = enif_inspect_binary(env, term, &bin);
+        if(!ret)
+        {
+            // not a binary either, so fail.
+            return 0;
+        }
+        var = std::string((const char*)bin.data, bin.size);
+        return ret;
+    }
     var.resize(len+1); // +1 for terminating null
     ret =  enif_get_string(env, term, &*(var.begin()), var.size(), ERL_NIF_LATIN1); // full list iteration
     if(ret > 0)
