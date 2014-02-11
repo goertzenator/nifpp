@@ -213,6 +213,33 @@ inline ERL_NIF_TERM make(ErlNifEnv *env, const std::string &var)
 }
 
 
+// bool
+inline int get(ErlNifEnv *env, ERL_NIF_TERM term, bool &var)
+{
+    char buf[6]; // max( len("true"), len("false")) + 1
+
+    if(!enif_get_atom(env, term, buf, sizeof(buf), ERL_NIF_LATIN1))
+        return 0;
+
+    if(strcmp(buf, "true")==0)
+    {
+        var = true;
+        return 1;
+    }
+    else if(strcmp(buf, "false")==0)
+    {
+        var = false;
+        return 1;
+    }
+
+    return 0; // some other atom, return error
+}
+inline ERL_NIF_TERM make(ErlNifEnv *env, const bool var)
+{
+    return enif_make_atom(env, var?"true":"false");
+}
+
+
 // Number conversions
 
 inline int get(ErlNifEnv *env, ERL_NIF_TERM term, double &var)

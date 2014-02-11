@@ -95,7 +95,13 @@ long_test_() ->
         ?_assertEqual( 1000, invoke_nif({long2, 500})),
         ?_assertError( badarg, invoke_nif({long2, abc}))
         ].
-        
+
+bool_test_() ->
+    [
+        ?_assertEqual( true, invoke_nif({booln, false})),
+        ?_assertEqual( false, invoke_nif({booln, true}))
+    ].
+
 tuple_test_() ->
     [
         ?_assertEqual( {246, "abcabc", {xyzxyz, 912}, 1000.0},

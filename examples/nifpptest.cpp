@@ -110,6 +110,14 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
         out = in*2;
         return make(env,out);
     }
+    else if(cmd=="booln")
+    {
+        bool in;
+        bool out;
+        get_throws(env, cmddata, in);
+        out = !in;
+        return make(env,out);
+    }
     else if(cmd=="tuple2a")
     {
         // test complex tie() coding
