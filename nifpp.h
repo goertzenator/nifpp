@@ -318,7 +318,7 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, list_cell &var)
 // forward declarations for friend statements
 template<class T> class resource_ptr;
 template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var);
-template<typename T, typename ...Args> resource_ptr<T> construct_resource(Args... args);
+template<typename T, typename ...Args> resource_ptr<T> construct_resource(Args&&... args);
 
 template<class T> class resource_ptr
 {
@@ -342,7 +342,7 @@ private:
 
     // construction only permitted from these functions:
     template<typename U, typename ...Args>
-    friend resource_ptr<U> construct_resource(Args... args);
+    friend resource_ptr<U> construct_resource(Args&&... args);
     template<typename U>
     friend int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<U> &var);
     // I would have liked to specialize these to T instead of granting access
@@ -574,7 +574,7 @@ int register_resource(ErlNifEnv* env,
 
 
 template<typename T, typename ...Args>
-resource_ptr<T> construct_resource(Args... args)
+resource_ptr<T> construct_resource(Args&&... args)
 {
     ErlNifResourceType* type = detail::resource_data<T>::type;
     assert(type!=0);
@@ -588,7 +588,7 @@ resource_ptr<T> construct_resource(Args... args)
         reinterpret_cast<detail::dtor_wrapper<T>*>(mem)->constructed = false;
 
         //  invoke constructor with "placement new"
-        new(mem) T(args...);
+        new(mem) T(std::forward<Args>(args)...);
 
         // ctor succeeded, enable dtor
         reinterpret_cast<detail::dtor_wrapper<T>*>(mem)->constructed = true;
