@@ -753,7 +753,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var)
 template<typename T>
 ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<T> &var)
 {
-    ERL_NIF_TERM head, tail;
+    ERL_NIF_TERM tail;
     tail = enif_make_list(env, 0);
     for(auto i=var.rbegin(); i!=var.rend(); i++)
     {
@@ -776,7 +776,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var)
 template<typename T>
 ERL_NIF_TERM make(ErlNifEnv *env, const std::list<T> &var)
 {
-    ERL_NIF_TERM head, tail;
+    ERL_NIF_TERM tail;
     tail = enif_make_list(env, 0);
     for(auto i=var.rbegin(); i!=var.rend(); i++)
     {
@@ -795,7 +795,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::deque<T> &var)
 template<typename T>
 ERL_NIF_TERM make(ErlNifEnv *env, const std::deque<T> &var)
 {
-    ERL_NIF_TERM head, tail;
+    ERL_NIF_TERM tail;
     tail = enif_make_list(env, 0);
     for(auto i=var.rbegin(); i!=var.rend(); i++)
     {
@@ -813,7 +813,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::set<T> &var)
 template<typename T>
 ERL_NIF_TERM make(ErlNifEnv *env, const std::set<T> &var)
 {
-    ERL_NIF_TERM head, tail;
+    ERL_NIF_TERM tail;
     tail = enif_make_list(env, 0);
     for(auto i=var.rbegin(); i!=var.rend(); i++)
     {
@@ -831,7 +831,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T> &var)
 template<typename T>
 ERL_NIF_TERM make(ErlNifEnv *env, const std::multiset<T> &var)
 {
-    ERL_NIF_TERM head, tail;
+    ERL_NIF_TERM tail;
     tail = enif_make_list(env, 0);
     for(auto i=var.rbegin(); i!=var.rend(); i++)
     {
