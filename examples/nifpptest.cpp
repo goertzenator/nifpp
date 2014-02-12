@@ -1,4 +1,3 @@
-
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -11,6 +10,7 @@ using std::ref;
 #define NIFPP_INTRUSIVE_UNIT_TEST
 #include "nifpp.h"
 
+extern nifpp::resource_ptr<int> get_resource_int(int val);
 
 using namespace nifpp;
 
@@ -279,6 +279,14 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
         get_throws(env, cmddata, ptr);
         (*ptr)--;
         return make(env, *ptr); // return value of int
+    }
+    else if(cmd=="makeresint_ext")
+    {
+        int num;
+        get_throws(env, cmddata, num);
+
+        auto ptr = get_resource_int(num);
+        return make(env, ptr); // make resource term
     }
 
     // verify resource destruction

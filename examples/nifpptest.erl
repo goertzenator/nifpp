@@ -174,9 +174,18 @@ intres_test_() ->
             ?assertEqual(24, invoke_nif({decresint, Res})),
             ?assertEqual(23, invoke_nif({decresint, Res})),
             ?assertEqual(22, invoke_nif({decresint, Res}))
+        end,
+        fun() ->
+            Res = invoke_nif({makeresint_ext, 22}),
+            ?assertEqual(23, invoke_nif({incresint, Res})),
+            ?assertEqual(24, invoke_nif({incresint, Res})),
+            ?assertEqual(25, invoke_nif({incresint, Res})),
+            ?assertEqual(24, invoke_nif({decresint, Res})),
+            ?assertEqual(23, invoke_nif({decresint, Res})),
+            ?assertEqual(22, invoke_nif({decresint, Res}))
         end
-          ]. 
-    
+    ].
+
 tracetyperes_test_() ->
     [
         fun() ->

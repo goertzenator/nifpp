@@ -546,8 +546,31 @@ struct resource_data
 {
     static ErlNifResourceType* type;
 };
-template<typename T> ErlNifResourceType* resource_data<T>::type=0;
 
+template<typename T> ErlNifResourceType* resource_data<T>::type=0;
+/*
+The above definition deserves some explanation:
+
+As the compiler sees usages of register_resource<T>() and get(..., resource_ptr<T>),
+instances of the above variable will pop into existance to hold the Erlang
+resource type (ErlNifResourceType*).  register_resource<T>() initializes the
+value, and get(..., resource_ptr<T>) uses it.
+
+Definitions of static data members have external linkage, so if you are using
+the same resource type in multiple source files, each compiled object will
+have a duplicate instance of resource_data<T>::type.  For non-template static
+data members you will get duplicate symbol errors at link-time.  For *template*
+static data members, the consensus seems to be that the linker should eliminate
+all duplicates (which is what we want).  The C++ standard isn't very explicit
+about this (at least to me), so if you do run into duplicate symbol issues with
+the above definition, simply move the above def into your source file where all
+your register_resource<T>() calls are.  This will ensure that the above
+definition appears only once in the final binary.
+
+References:
+http://stackoverflow.com/questions/19366615/static-member-variable-in-class-template
+
+*/
 
 } // namespace detail (resource detail)
 
