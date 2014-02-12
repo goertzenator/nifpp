@@ -118,6 +118,12 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
         out = !in;
         return make(env,out);
     }
+    else if(cmd=="pidcp")
+    {
+        ErlNifPid in;
+        get_throws(env, cmddata, in);
+        return make(env,in);
+    }
     else if(cmd=="tuple2a")
     {
         // test complex tie() coding

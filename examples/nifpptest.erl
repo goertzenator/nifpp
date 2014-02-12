@@ -102,6 +102,11 @@ bool_test_() ->
         ?_assertEqual( false, invoke_nif({booln, true}))
     ].
 
+pid_test_() ->
+    [
+        ?_assertEqual( self(), invoke_nif({pidcp, self()}))
+    ].
+
 tuple_test_() ->
     [
         ?_assertEqual( {246, "abcabc", {xyzxyz, 912}, 1000.0},

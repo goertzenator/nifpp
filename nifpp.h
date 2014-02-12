@@ -328,29 +328,17 @@ inline ERL_NIF_TERM make(ErlNifEnv *env, binary &var)
 }
 
 
+// ErlNifPid
 
-// Miscellaneous conversions
-
-/*    
-// iolist as binary    
-    inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary &var)
-    {
-        return enif_inspect_iolist_as_binary(env, term, &var);
-    }
-*/
-
-
-/*    
 inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
 {
     return enif_get_local_pid(env, term, &var);
 }
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, list_cell &var)
+inline ERL_NIF_TERM make(ErlNifEnv *env, const ErlNifPid &var)
 {
-    return enif_get_list_cell(env, term, &var.head, &var.tail);
+    return enif_make_pid(env, &var);
 }
-*/
 
 
 
