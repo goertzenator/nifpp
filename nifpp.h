@@ -815,7 +815,7 @@ ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<T> &var)
     }
     return tail;
 }
-ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<ERL_NIF_TERM> &var)
+inline ERL_NIF_TERM make(ErlNifEnv *env, const std::vector<ERL_NIF_TERM> &var)
 {
     return enif_make_list_from_array(env, &var[0], var.size());
 }
