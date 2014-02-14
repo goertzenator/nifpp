@@ -22,7 +22,7 @@ do_times(F, N) ->
     do_times(F,N-1).
     
 benchmark() ->
-    Reps = 100,
+    Reps = 1000,
     InnerReps = 10000,
     Input = {{1,2},3},
     tuple_twiddle_c:twiddle(Input),
@@ -127,32 +127,37 @@ list_test_() ->
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2aa, [1,2,3,5,4]})),
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2ab, [1,2,3,5,4]})),
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2ac, [1,2,3,5,4]})),
-        ?_assertEqual(lists:sort([1,2,3,4,5]),           lists:sort(invoke_nif({list2ad, [1,2,3,5,4]}))),
-        ?_assertEqual(lists:sort([1,1,2,2,3,3,4,4,5,5]), lists:sort(invoke_nif({list2ae, [1,2,3,5,4]}))),
-        
+        ?_assertEqual([1,2,3,4,5],           lists:sort(invoke_nif({list2ad, [1,2,3,5,4]}))),
+        ?_assertEqual([1,1,2,2,3,3,4,4,5,5], lists:sort(invoke_nif({list2ae, [1,2,3,5,4]}))),
+        ?_assertEqual([1,2,3,4,5],           lists:sort(invoke_nif({list2af, [1,2,3,5,4]}))),
+
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2ba, [1,2,3,5,4]})),
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2bb, [1,2,3,5,4]})),
         ?_assertEqual([1,2,3,5,4,4,5,3,2,1], invoke_nif({list2bc, [1,2,3,5,4]})),
-        ?_assertEqual(lists:sort([1,2,3,4,5]),           lists:sort(invoke_nif({list2bd, [1,2,3,5,4]}))),
-        ?_assertEqual(lists:sort([1,1,2,2,3,3,4,4,5,5]), lists:sort(invoke_nif({list2be, [1,2,3,5,4]}))),
-        
+        ?_assertEqual([1,2,3,4,5],           lists:sort(invoke_nif({list2bd, [1,2,3,5,4]}))),
+        ?_assertEqual([1,1,2,2,3,3,4,4,5,5], lists:sort(invoke_nif({list2be, [1,2,3,5,4]}))),
+        ?_assertEqual([1,2,3,4,5],           lists:sort(invoke_nif({list2bf, [1,2,3,5,4]}))),
+
         ?_assertEqual(["1","2","3","5","4","4","5","3","2","1"], invoke_nif({list2ba, ["1","2","3","5","4"]})),
         ?_assertEqual(["1","2","3","5","4","4","5","3","2","1"], invoke_nif({list2bb, ["1","2","3","5","4"]})),
         ?_assertEqual(["1","2","3","5","4","4","5","3","2","1"], invoke_nif({list2bc, ["1","2","3","5","4"]})),
-        ?_assertEqual(lists:sort(["1","2","3","4","5"]),                     lists:sort(invoke_nif({list2bd, ["1","2","3","5","4"]}))),
-        ?_assertEqual(lists:sort(["1","1","2","2","3","3","4","4","5","5"]), lists:sort(invoke_nif({list2be, ["1","2","3","5","4"]}))),
+        ?_assertEqual(["1","2","3","4","5"],                     lists:sort(invoke_nif({list2bd, ["1","2","3","5","4"]}))),
+        ?_assertEqual(["1","1","2","2","3","3","4","4","5","5"], lists:sort(invoke_nif({list2be, ["1","2","3","5","4"]}))),
+        ?_assertEqual(["1","2","3","4","5"],                     lists:sort(invoke_nif({list2bf, ["1","2","3","5","4"]}))),
 
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2ba, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2bb, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2bc, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
-        ?_assertEqual(lists:sort([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]),                     lists:sort(invoke_nif({list2bd, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
-        ?_assertEqual(lists:sort([{1,"1"},{1,"1"},{2,"2"},{2,"2"},{3,"3"},{3,"3"},{9,"5"},{9,"5"},{16,"4"},{16,"4"}]), lists:sort(invoke_nif({list2be, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
+        ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}],                     lists:sort(invoke_nif({list2bd, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
+        ?_assertEqual([{1,"1"},{1,"1"},{2,"2"},{2,"2"},{3,"3"},{3,"3"},{9,"5"},{9,"5"},{16,"4"},{16,"4"}], lists:sort(invoke_nif({list2be, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
+        ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}],                     lists:sort(invoke_nif({list2bf, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
 
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2ca, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2cb, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
         ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"},{16,"4"},{9,"5"},{3,"3"},{2,"2"},{1,"1"}], invoke_nif({list2cc, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})),
-        ?_assertEqual(lists:sort([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]),                     lists:sort(invoke_nif({list2cd, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
-        ?_assertEqual(lists:sort([{1,"1"},{1,"1"},{2,"2"},{2,"2"},{3,"3"},{3,"3"},{9,"5"},{9,"5"},{16,"4"},{16,"4"}]), lists:sort(invoke_nif({list2ce, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})))
+        ?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}],                     lists:sort(invoke_nif({list2cd, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]}))),
+        ?_assertEqual([{1,"1"},{1,"1"},{2,"2"},{2,"2"},{3,"3"},{3,"3"},{9,"5"},{9,"5"},{16,"4"},{16,"4"}], lists:sort(invoke_nif({list2ce, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})))
+        %?_assertEqual([{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}],                     lists:sort(invoke_nif({list2cf, [{1,"1"},{2,"2"},{3,"3"},{9,"5"},{16,"4"}]})))
 
         ].
 
@@ -163,6 +168,22 @@ stdarray_test_() ->
         ?_assertError(badarg, invoke_nif({stdarray_inc2, [1,2,3,4]})), % too short
         ?_assertEqual([1,2,5,5,4], invoke_nif({stdarray_cp32, [1,2,3,5,4]}))
     ].
+
+map_test_() ->
+    [
+        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipaa, #{abc=>123, def=>456, pqr=>789}})),
+        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipab, #{abc=>123, def=>456, pqr=>789}})),
+        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipba, #{abc=>123, def=>456, pqr=>789}})),
+        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipbb, #{abc=>123, def=>456, pqr=>789}}))
+
+%% these are no good, they depend on iteration order which is undefined.
+%%         ?_assertEqual(#{123 => abc,456 => def}, invoke_nif({mapflipaa, #{abc=>123, def=>456, def=>123}})),
+%%         ?_assertEqual(#{123 => abc,456 => def}, invoke_nif({mapflipab, #{abc=>123, def=>456, pqr=>123}})),
+%%         ?_assertEqual(#{123 => abc,456 => def}, invoke_nif({mapflipba, #{abc=>123, def=>456, def=>123}})),
+%%         ?_assertEqual(#{123 => abc,456 => def}, invoke_nif({mapflipbb, #{abc=>123, def=>456, pqr=>123}}))
+
+
+].
 
 intres_test_() ->
     [

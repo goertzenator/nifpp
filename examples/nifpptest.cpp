@@ -16,7 +16,7 @@ using namespace nifpp;
 
 // list test abstracted over container type and contained element type
 template<typename T> // supported container type
-ERL_NIF_TERM list2_test(ErlNifEnv* env, ERL_NIF_TERM term)
+nifpp::TERM list2_test(ErlNifEnv* env, ERL_NIF_TERM term)
 {
     T container;
     get_throws(env, term, container);
@@ -30,6 +30,52 @@ ERL_NIF_TERM list2_test(ErlNifEnv* env, ERL_NIF_TERM term)
     }
 
     return make(env, container);
+}
+
+// set test abstracted over container type and contained element type
+template<typename T> // supported container type
+nifpp::TERM set2_test(ErlNifEnv* env, ERL_NIF_TERM term)
+{
+    T container;
+    get_throws(env, term, container);
+
+    // append reversed copy of container to itself
+    T dup = container;
+    for(auto i=dup.begin(); i!=dup.end(); i++)
+    {
+        //container.push_back(*i);
+        container.insert(container.end(), *i);
+    }
+
+    return make(env, container);
+}
+
+// swap keys and values.
+template<typename TK, typename TV>
+nifpp::TERM mapflip_test(ErlNifEnv* env, ERL_NIF_TERM term)
+{
+    std::map<TK,TV> inmap;
+    std::map<TV,TK> outmap;
+    get_throws(env, term, inmap);
+    for(auto i=inmap.begin(); i!=inmap.end(); i++)
+    {
+        outmap[i->second] = i->first;
+    }
+    return make(env, outmap);
+}
+
+// swap keys and values (unordered_map version.  I would templatize the abstract map type if I knew how)
+template<typename TK, typename TV>
+nifpp::TERM umapflip_test(ErlNifEnv* env, ERL_NIF_TERM term)
+{
+    std::unordered_map<TK,TV> inmap;
+    std::unordered_map<TV,TK> outmap;
+    get_throws(env, term, inmap);
+    for(auto i=inmap.begin(); i!=inmap.end(); i++)
+    {
+        outmap[i->second] = i->first;
+    }
+    return make(env, outmap);
 }
 
 
@@ -52,11 +98,11 @@ public:
 int tracetype::ctor_cnt;
 int tracetype::dtor_cnt;
 
-ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
+ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
 {
     
     str_atom cmd;
-    ERL_NIF_TERM cmddata;
+    nifpp::TERM cmddata;
     auto cmdtup=std::tie(cmd,cmddata);
     get_throws(env, term, cmdtup);
     cout << "cmd = " << cmd << endl;
@@ -224,20 +270,23 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
     else if(cmd=="list2aa") { return list2_test<std::vector   <int> >(env, cmddata); }
     else if(cmd=="list2ab") { return list2_test<std::list     <int> >(env, cmddata); }
     else if(cmd=="list2ac") { return list2_test<std::deque    <int> >(env, cmddata); }
-    else if(cmd=="list2ad") { return list2_test<std::set      <int> >(env, cmddata); }
+    else if(cmd=="list2ad") { return  set2_test<std::set      <int> >(env, cmddata); }
     else if(cmd=="list2ae") { return list2_test<std::multiset <int> >(env, cmddata); }
+    else if(cmd=="list2af") { return  set2_test<std::unordered_set<int> >(env, cmddata); }
 
-    else if(cmd=="list2ba") { return list2_test<std::vector   <ERL_NIF_TERM> >(env, cmddata); }
-    else if(cmd=="list2bb") { return list2_test<std::list     <ERL_NIF_TERM> >(env, cmddata); }
-    else if(cmd=="list2bc") { return list2_test<std::deque    <ERL_NIF_TERM> >(env, cmddata); }
-    else if(cmd=="list2bd") { return list2_test<std::set      <ERL_NIF_TERM> >(env, cmddata); }
-    else if(cmd=="list2be") { return list2_test<std::multiset <ERL_NIF_TERM> >(env, cmddata); }
+    else if(cmd=="list2ba") { return list2_test<std::vector   <nifpp::TERM> >(env, cmddata); }
+    else if(cmd=="list2bb") { return list2_test<std::list     <nifpp::TERM> >(env, cmddata); }
+    else if(cmd=="list2bc") { return list2_test<std::deque    <nifpp::TERM> >(env, cmddata); }
+    else if(cmd=="list2bd") { return  set2_test<std::set      <nifpp::TERM> >(env, cmddata); }
+    else if(cmd=="list2be") { return list2_test<std::multiset <nifpp::TERM> >(env, cmddata); }
+    else if(cmd=="list2bf") { return  set2_test<std::unordered_set<nifpp::TERM> >(env, cmddata); }
 
     else if(cmd=="list2ca") { return list2_test<std::vector   <std::tuple<int, std::string> > >(env, cmddata); }
     else if(cmd=="list2cb") { return list2_test<std::list     <std::tuple<int, std::string> > >(env, cmddata); }
     else if(cmd=="list2cc") { return list2_test<std::deque    <std::tuple<int, std::string> > >(env, cmddata); }
-    else if(cmd=="list2cd") { return list2_test<std::set      <std::tuple<int, std::string> > >(env, cmddata); }
+    else if(cmd=="list2cd") { return  set2_test<std::set      <std::tuple<int, std::string> > >(env, cmddata); }
     else if(cmd=="list2ce") { return list2_test<std::multiset <std::tuple<int, std::string> > >(env, cmddata); }
+    //else if(cmd=="list2cf") { return  set2_test<std::unordered_set<std::tuple<int, std::string> > >(env, cmddata); }
 
     // increment 2nd element of std::array<int, 5>
     else if(cmd=="stdarray_inc2")
@@ -256,6 +305,12 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, ERL_NIF_TERM term)
         array[2]=array[3];
         return make(env, array);
     }
+
+    else if(cmd=="mapflipaa") { return  mapflip_test<nifpp::TERM, nifpp::TERM>(env, cmddata); }
+    else if(cmd=="mapflipab") { return umapflip_test<nifpp::TERM, nifpp::TERM>(env, cmddata); }
+
+    else if(cmd=="mapflipba") { return  mapflip_test<nifpp::str_atom, int>(env, cmddata); }
+    else if(cmd=="mapflipbb") { return umapflip_test<nifpp::str_atom, int>(env, cmddata); }
 
     // basic resource testing
     else if(cmd=="makeresint")
@@ -373,7 +428,7 @@ static ERL_NIF_TERM invoke_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 {
     try
     {
-        return nif_main(env, argv[0]);
+        return nif_main(env, nifpp::TERM(argv[0]));
     }
     catch(nifpp::badarg)
     {
