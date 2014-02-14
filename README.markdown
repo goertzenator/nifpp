@@ -31,9 +31,11 @@ All nifpp functions are available in the `nifpp` namespace.  The C API remains a
 
 
 ## C++11 compatibility
-Nifpp was tested with gcc-4.6, but may work with older versions.  Activate c++11 support with the switch "--std=c++0x" or "--std=c++11".
+Nifpp was tested with gcc-4.8, but should also work with 4.6 and 4.7.  Activate c++11 support with "--std=c++11".
 
-MSVC 2011 and older lack (at least) variadic templates and will not work with nifpp.
+I did not tested with clang, but I have no reason to think that it will not work.  Please tell me if there are issues.
+
+I understand that c++11 support in MSVC 2013 is still marginal, so I do not have high hopes of success with that.  Do tell me if it works.
 
 ## unsigned long, ERL_NIF_TERM, and nifpp::TERM
 
