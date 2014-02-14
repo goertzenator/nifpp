@@ -318,6 +318,23 @@ This is useful if you want to iterate through a list without copying the entire 
 
 [list for each example]
 
+### Maps
+
+Erlang maps can be represented by `std::map` and `std::unordered_map`.  Maps are only available when compiling NIFs on Erlang v17 or later.
+
+`nifpp::get()` and `nifpp::make()` are used to decode/create Erlang maps.  Examples:
+
+    std::map<nifpp::str_atom, nifpp::TERM> map1;
+    nifpp::get_throws(env, term, map1);
+
+    std::map<nifpp::str_atom, int> map2;
+    nifpp::get_throws(env, term, map2);
+
+    std::map<nifpp::str_atom, int> map3;
+    map3["abc"] = 123;
+    map3["pqr"] = 456;
+    nifpp::TERM term = nifpp::make(env, map3);
+
 ### Resources
 
 The following forms are for working with resources:
