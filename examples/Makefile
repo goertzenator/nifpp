@@ -1,4 +1,5 @@
-NIF_INCLUDE:=-I./../ -I/usr/local/include/erlang
+ERLANG_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir(), "/erts-", erlang:system_info(version), "/include"])])' -s init stop -noshell)
+NIF_INCLUDE:=-I../ -I$(ERLANG_PATH)
 
 CFLAGS = -g -O3 -ansi -pedantic -Wall -Wextra $(NIF_INCLUDE)
 
@@ -35,4 +36,5 @@ test: all
 
 clean:
 	rm -f *.so *.beam
+	rm -rf *.so.dSYM
 
