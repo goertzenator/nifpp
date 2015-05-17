@@ -1,1 +1,4 @@
 examples/*.beam
+**/*.o
+**/*.so
+**/*.so.dSYM*
