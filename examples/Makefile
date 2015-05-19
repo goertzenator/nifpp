@@ -8,6 +8,8 @@ ifneq ($(OS),Windows_NT)
 
 	ifeq ($(shell uname),Darwin)
 		LDFLAGS += -dynamiclib -undefined dynamic_lookup
+	else
+		LDFLAGS += -shared
 	endif
 endif
 
