@@ -1,12 +1,12 @@
-//
-// tuple_twiddle_c.c - C reference version of tuple manipulation
-//
+/*
+   tuple_twiddle_c.c - C reference version of tuple manipulation
+*/
 #include <erl_nif.h>
 
 
-//
-// Convert tuple of form {{1,2},3} to {3,{2,1}}.  Fully decode and recode ints.
-//
+/*
+  Convert tuple of form {{1,2},3} to {3,{2,1}}.  Fully decode and recode ints.
+*/
 static ERL_NIF_TERM twiddle_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     int a,b,c;
