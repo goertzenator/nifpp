@@ -16,19 +16,19 @@ endif
 all: nifpptest.so tuple_twiddle_cpp.so tuple_twiddle_c.so nifpptest.beam tuple_twiddle_cpp.beam tuple_twiddle_c.beam
 
 nifpptest.o nifpptest_2tu.o: %.o: %.cpp ../nifpp.h
-	g++ $(CFLAGS) $(LDFLAGS) -std=c++11 -c $<
+	$(CXX) $(CFLAGS) $(LDFLAGS) -std=c++11 -c $<
 
 nifpptest.so: nifpptest.o nifpptest_2tu.o
-	g++ $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ $^
+	$(CXX) $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ $^
 
 mmap_binary.so: mmap_binary.cpp ../nifpp.h
-	g++ $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ -lboost_iostreams-mt $<
+	$(CXX) $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ -lboost_iostreams-mt $<
 
 tuple_twiddle_c.so: tuple_twiddle_c.c ../nifpp.h
-	gcc $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 tuple_twiddle_cpp.so: tuple_twiddle_cpp.cpp ../nifpp.h
-	g++ $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ $<
+	$(CXX) $(CFLAGS) $(LDFLAGS) -std=c++11 -o $@ $<
 
 %.beam: %.erl
 	erlc $<
