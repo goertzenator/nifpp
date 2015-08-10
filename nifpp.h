@@ -111,7 +111,7 @@ struct binary: public ErlNifBinary
 {
 public:
     //binary(): needs_release(false) {}
-    binary(size_t _size)
+    explicit binary(size_t _size)
     {
         if(enif_alloc_binary(_size, this))
         {
@@ -144,7 +144,8 @@ protected:
 
 private:
     // there's no nice way to keep track of owns_data in copies, so just prevent copying
-    binary(const binary &src){}
+    binary(const binary &) = delete;
+    binary & operator=(const binary &) = delete;
 };
 
 #ifdef NIFPP_INTRUSIVE_UNIT_TEST
@@ -194,12 +195,12 @@ template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::unordere
 #endif
 
 // ERL_NIF_TERM
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, TERM &var)
+inline int get(ErlNifEnv *, ERL_NIF_TERM term, TERM &var)
 {
     var = TERM(term);
     return 1;
 }
-inline TERM make(ErlNifEnv *env, const TERM term)
+inline TERM make(ErlNifEnv *, const TERM term)
 {
     return TERM(term);
 }
@@ -390,7 +391,7 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
     return TERM(enif_get_local_pid(env, term, &var));
 }
 
-inline TERM make(ErlNifEnv *env, const ErlNifPid &var)
+inline TERM make(ErlNifEnv *env __attribute__ ((unused)), const ErlNifPid &var)
 {
     return TERM(enif_make_pid(env, &var));
 }
@@ -739,7 +740,7 @@ namespace detail
     struct array_to_tupler<0>
     {
         template<typename ...Ts>
-        static int go(ErlNifEnv *env, std::tuple<Ts...> &t, const ERL_NIF_TERM *end)
+        static int go(ErlNifEnv *, std::tuple<Ts...> &, const ERL_NIF_TERM *)
         {
             return 1;
         }
@@ -784,7 +785,7 @@ namespace detail
     struct tuple_to_arrayer<0>
     {
         template<typename ...Ts>
-        static void go(ErlNifEnv *env, const std::tuple<Ts...> &t, ERL_NIF_TERM *end)
+        static void go(ErlNifEnv *, const std::tuple<Ts...> &, ERL_NIF_TERM *)
         {}
     };
 } // namespace detail
