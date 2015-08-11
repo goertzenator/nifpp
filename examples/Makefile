@@ -37,6 +37,6 @@ test: all
 	erl -s nifpptest
 
 clean:
-	rm -f *.so *.beam
+	rm -f *.so *.beam *.o
 	rm -rf *.so.dSYM
 
