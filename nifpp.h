@@ -391,7 +391,7 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
     return TERM(enif_get_local_pid(env, term, &var));
 }
 
-inline TERM make(ErlNifEnv *env __attribute__ ((unused)), const ErlNifPid &var)
+inline TERM make(ErlNifEnv *env, const ErlNifPid &var)
 {
     return TERM(enif_make_pid(env, &var));
 }
