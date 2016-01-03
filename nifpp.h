@@ -62,8 +62,8 @@ struct TERM
     bool operator<(const TERM rhs) const
     {return v<rhs.v;}
 
-//    bool operator==(const TERM rhs) const
-//    {return v==rhs.v;}
+    // There's no need to overload operator==, since the TERM has
+    // implicit cast to ERL_NIF_TERM, which is long int.
 };
 
 static_assert(sizeof(TERM)==sizeof(ERL_NIF_TERM), "TERM size does not match ERL_NIF_TERM");
