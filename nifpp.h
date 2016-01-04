@@ -54,7 +54,7 @@ struct TERM
 {
     ERL_NIF_TERM v;
 
-    TERM() : v(0) {}
+    TERM() {}
     explicit TERM(ERL_NIF_TERM x):v(x){}
 
     inline operator ERL_NIF_TERM(){return v;}
