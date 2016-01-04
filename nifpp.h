@@ -54,7 +54,7 @@ struct TERM
 {
     ERL_NIF_TERM v;
 
-    TERM(){}
+    TERM() {}
     explicit TERM(ERL_NIF_TERM x):v(x){}
 
     inline operator ERL_NIF_TERM(){return v;}
@@ -62,8 +62,8 @@ struct TERM
     bool operator<(const TERM rhs) const
     {return v<rhs.v;}
 
-    bool operator==(const TERM rhs) const
-    {return v==rhs.v;}
+    // There's no need to overload operator==, since the TERM has
+    // implicit cast to ERL_NIF_TERM, which is long int.
 };
 
 static_assert(sizeof(TERM)==sizeof(ERL_NIF_TERM), "TERM size does not match ERL_NIF_TERM");
@@ -766,6 +766,18 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
     return detail::array_to_tupler<std::tuple_size<std::tuple<Ts...>>::value>::go(env, var, array+arity);
 }
 
+template<typename T1, typename T2>
+int get(ErlNifEnv *env, ERL_NIF_TERM term, std::pair<T1, T2>& var)
+{
+    int arity;
+    const ERL_NIF_TERM *array;
+    int ret = enif_get_tuple(env, term, &arity, &array);
+
+    // check if tuple of size 2
+    if(!ret || arity != 2)
+        return 0;
+    return get(env, array[0], var.first) && get(env, array[1], var.second);
+}
 
 
 namespace detail
@@ -796,6 +808,15 @@ TERM make(ErlNifEnv *env, const std::tuple<Ts...> &var)
 {
     std::array<ERL_NIF_TERM, std::tuple_size<std::tuple<Ts...>>::value> array;
     detail::tuple_to_arrayer<std::tuple_size<std::tuple<Ts&...>>::value>::go(env, var, array.end());
+    return TERM(enif_make_tuple_from_array(env, array.begin(), array.size()));
+}
+
+template<typename T1, typename T2>
+TERM make(ErlNifEnv *env, const std::pair<T1, T2>& var)
+{
+    std::array<ERL_NIF_TERM, 2> array;
+    array[0] = make(env, var.first);
+    array[1] = make(env, var.second);
     return TERM(enif_make_tuple_from_array(env, array.begin(), array.size()));
 }
 
