@@ -57,7 +57,8 @@ struct TERM
     TERM() {}
     explicit TERM(ERL_NIF_TERM x):v(x){}
 
-    inline operator ERL_NIF_TERM(){return v;}
+    inline operator ERL_NIF_TERM() const
+    {return v;}
 
     bool operator<(const TERM rhs) const
     {return v<rhs.v;}
