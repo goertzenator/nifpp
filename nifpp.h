@@ -703,7 +703,7 @@ resource_ptr<T> construct_resource(Args&&... args)
 
         // ctor succeeded, enable dtor
         reinterpret_cast<detail::dtor_wrapper<T>*>(mem)->constructed = true;
-        return std::move(rptr);
+        return rptr;
     }
     else
     {
@@ -1094,7 +1094,7 @@ T get(ErlNifEnv *env, ERL_NIF_TERM term)
     T temp;
     if(get(env, term, temp))
     {
-        return std::move(temp);
+        return temp;
     }
     throw badarg();
 }
