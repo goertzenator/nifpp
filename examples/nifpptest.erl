@@ -174,7 +174,8 @@ map_test_() ->
         ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipaa, #{abc=>123, def=>456, pqr=>789}})),
         ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipab, #{abc=>123, def=>456, pqr=>789}})),
         ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipba, #{abc=>123, def=>456, pqr=>789}})),
-        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipbb, #{abc=>123, def=>456, pqr=>789}}))
+        ?_assertEqual(#{123 => abc,456 => def,789 => pqr}, invoke_nif({mapflipbb, #{abc=>123, def=>456, pqr=>789}})),
+        ?_assertEqual( #{a => 1,b => "b",c => #{a1 => 1,b1 => 2}}, invoke_nif({nestedmap, #{}}))
 
 %% these are no good, they depend on iteration order which is undefined.
 %%         ?_assertEqual(#{123 => abc,456 => def}, invoke_nif({mapflipaa, #{abc=>123, def=>456, def=>123}})),
@@ -237,4 +238,4 @@ bin_test_() ->
     end
     ].
             
-            
+

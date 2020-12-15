@@ -188,11 +188,13 @@ template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T>
 template<typename T> TERM make(ErlNifEnv *env, const std::multiset<T> &var);
 
 #if NIFPP_HAS_MAPS
+template<typename TK, typename TV> int add_to_map(ErlNifEnv *env, const std::pair<TK,TV> &var, TERM &map);
+
 template<typename TK, typename TV> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var);
-template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::map<TK,TV> &var);
+template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::map<TK,TV> &var, TERM *add_to_map = NULL);
 
 template<typename TK, typename TV> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var);
-template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::unordered_map<TK,TV> &var);
+template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::unordered_map<TK,TV> &var, TERM *map_to_use = NULL);
 #endif
 
 // ERL_NIF_TERM
@@ -264,6 +266,11 @@ inline int get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
     }
     return ret;
 }
+inline TERM make(ErlNifEnv *env, const char *var)
+{
+    return TERM(enif_make_string_len(env, var, strlen(var), ERL_NIF_LATIN1));
+}
+
 inline TERM make(ErlNifEnv *env, const std::string &var)
 {
     return TERM(enif_make_string_len(env, &(*(var.begin())), var.size(), ERL_NIF_LATIN1));
@@ -1048,6 +1055,12 @@ int map_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
     return 0;
 }
 
+template<typename TK, typename TV>
+int add_to_map(ErlNifEnv *env, const std::pair<TK,TV> &var, TERM &map)
+{
+    return enif_make_map_put(env, map,
+            make(env, var.first), make(env, var.second), (ERL_NIF_TERM *)&map);
+}
 
 template<typename TK, typename TV>
 int get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var)
@@ -1057,12 +1070,12 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var)
 }
 
 template<typename TK, typename TV>
-TERM make(ErlNifEnv *env, const std::map<TK,TV> &var)
+TERM make(ErlNifEnv *env, const std::map<TK,TV> &var, TERM *map_to_use)
 {
-    TERM map(enif_make_new_map(env));
+    TERM map(map_to_use ? map_to_use->v : enif_make_new_map(env));
     for(auto i=var.begin(); i!=var.end(); i++)
     {
-        enif_make_map_put(env, map, make(env, i->first), make(env, i->second), (ERL_NIF_TERM *)&map);
+        add_to_map(env, std::make_pair(i->first, i->second), map);
     }
     return map;
 }
@@ -1075,12 +1088,12 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var)
 }
 
 template<typename TK, typename TV>
-TERM make(ErlNifEnv *env, const std::unordered_map<TK,TV> &var)
+TERM make(ErlNifEnv *env, const std::unordered_map<TK,TV> &var, TERM *map_to_use)
 {
-    TERM map(enif_make_new_map(env));
+    TERM map(map_to_use ? map_to_use->v : enif_make_new_map(env));
     for(auto i=var.begin(); i!=var.end(); i++)
     {
-        enif_make_map_put(env, map, make(env, i->first), make(env, i->second), (ERL_NIF_TERM *)&map);
+        add_to_map(env, std::make_pair(i->first, i->second), map);
     }
     return map;
 }
