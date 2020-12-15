@@ -64,6 +64,27 @@ nifpp::TERM mapflip_test(ErlNifEnv* env, ERL_NIF_TERM term)
     return make(env, outmap);
 }
 
+// Build a nested map
+nifpp::TERM nestedmap_test(ErlNifEnv* env, ERL_NIF_TERM )
+{
+	std::map<nifpp::str_atom, int> int_map = {
+        {"a", 1}
+	};
+    nifpp::TERM outmap = make(env, int_map);
+
+    // Add another entry to map
+    add_to_map(env, std::make_pair(str_atom("b"), "b"), outmap);
+
+    // Add a nested map
+    std::map<nifpp::str_atom, int> nested_map = {
+        {"a1" , 1},
+        {"b1" , 2}
+    };
+    add_to_map(env, std::make_pair(str_atom("c"), make(env, nested_map)), outmap);
+
+    return outmap;
+}
+
 // swap keys and values (unordered_map version.  I would templatize the abstract map type if I knew how)
 template<typename TK, typename TV>
 nifpp::TERM umapflip_test(ErlNifEnv* env, ERL_NIF_TERM term)
@@ -311,6 +332,8 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
 
     else if(cmd=="mapflipba") { return  mapflip_test<nifpp::str_atom, int>(env, cmddata); }
     else if(cmd=="mapflipbb") { return umapflip_test<nifpp::str_atom, int>(env, cmddata); }
+
+    else if(cmd=="nestedmap") { return nestedmap_test(env, cmddata); }
 
     // basic resource testing
     else if(cmd=="makeresint")
