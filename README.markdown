@@ -168,7 +168,9 @@ String are represented by `std::string`.  Examples:
 
 ### Atoms
 
-nifpp represents atoms by the type `nifpp::str_atom`, which is a thin wrapper around `std::string`.  Other more complex and more efficient representations may be added in the future.
+nifpp represents atoms by the type `nifpp::str_atom` or type which is a thin
+wrapper around `std::string` or `nifpp::atom`, which is a wrapper around
+`ERL_NIF_TERM`.
 
 
 	// get() example:
@@ -183,6 +185,21 @@ nifpp represents atoms by the type `nifpp::str_atom`, which is a thin wrapper ar
 	nifpp::str_atom a(“hello world”);
 	nifpp::TERM term = nifpp::make(env, a);
 
+    // make() example 3:
+	nifpp::atom a;
+	nifpp::get_throws(env, term, a);
+	… do something with a...
+
+    // make() example 4:
+    nifpp::TERM term = nifpp::atom(env, "abc");
+
+    // make() example 5:
+    nifpp::atom a;
+    a.init(env, "abc");
+    if (nifpp::atom(env, "abc") == a)
+        … do something with a...
+
+    ... do something ...
 
 ### Binaries
 

@@ -50,6 +50,8 @@
 namespace nifpp
 {
 
+class badarg{};
+
 struct TERM
 {
     ERL_NIF_TERM v;
@@ -77,6 +79,53 @@ public:
 };
 
 
+class atom 
+{
+public:
+    atom() : val(0) {}
+    atom(ErlNifEnv* env, const char* val) : val(enif_make_atom(env, val)) {}
+    atom(ErlNifEnv* env, ERL_NIF_TERM v)
+    {
+        if (!enif_is_atom(env, v)) [[unlikely]]
+            throw badarg();
+        val = v;
+    }
+
+    atom(atom&& v)      : val(v) {}
+    atom(const atom& v) : val(v) {}
+
+    bool init(ErlNifEnv* env, const char* v)
+    {
+        assert(v == 0);
+        size_t len = strlen(v);
+        val = enif_make_atom_len(env, v, len);
+        return len > 255 ? false : true;
+    }
+    bool init(ErlNifEnv* env, ERL_NIF_TERM v)
+    {
+        assert(val == 0);
+        if(!enif_is_atom(env, v)) [[unlikely]]
+            return false;
+        val = v;
+        return true;
+    }
+
+
+    bool initialized() const { return val != 0; }
+
+    void operator=(atom&&      v) { val = v.val; }
+    void operator=(const atom& v) { val = v.val; }
+
+    bool operator==(ERL_NIF_TERM rhs) const { return  enif_is_identical(val, rhs);     }
+    bool operator!=(ERL_NIF_TERM rhs) const { return !enif_is_identical(val, rhs);     }
+    bool operator==(const atom&  rhs) const { return  enif_is_identical(val, rhs.val); }
+    bool operator!=(const atom&  rhs) const { return !enif_is_identical(val, rhs.val); }
+
+    operator ERL_NIF_TERM() const { return val; }
+private:
+    ERL_NIF_TERM val;
+};
+
 } //namespace nifpp
 
 // Add std::hash specializations.
@@ -96,6 +145,14 @@ template<> struct hash<nifpp::str_atom>
   std::size_t operator()(const nifpp::str_atom& k) const
   {
       return hash<std::string>()(k);
+  }
+};
+
+template<> struct hash<nifpp::atom>
+{
+  std::size_t operator()(const nifpp::atom& k) const
+  {
+      return hash<ERL_NIF_TERM>()(k);
   }
 };
 
@@ -153,50 +210,47 @@ private:
 int binary::release_counter=0;
 #endif
 
-class badarg{};
-
-
 //
 // get()/make() functions
 //
 
 // forward declare all container overloads so they can be used recursively
-template<typename ...Ts> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var);
+template<typename ...Ts> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var);
 template<typename ...Ts> TERM make(ErlNifEnv *env, const std::tuple<Ts...> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::vector<T> &var);
 TERM make(ErlNifEnv *env, const std::vector<TERM> &var);
 
-template<typename T, size_t N> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var);
+template<typename T, size_t N> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var);
 template<typename T, size_t N> TERM make(ErlNifEnv *env, const std::array<T, N> &var);
 template<size_t N>TERM make(ErlNifEnv *env, const std::array<TERM, N> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::list<T> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::deque<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::deque<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::deque<T> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::set<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::set<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::set<T> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_set<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_set<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::unordered_set<T> &var);
 
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T> &var);
 template<typename T> TERM make(ErlNifEnv *env, const std::multiset<T> &var);
 
 #if NIFPP_HAS_MAPS
-template<typename TK, typename TV> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var);
+template<typename TK, typename TV> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var);
 template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::map<TK,TV> &var);
 
-template<typename TK, typename TV> int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var);
+template<typename TK, typename TV> bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var);
 template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::unordered_map<TK,TV> &var);
 #endif
 
 // ERL_NIF_TERM
-inline int get(ErlNifEnv *, ERL_NIF_TERM term, TERM &var)
+inline bool get(ErlNifEnv *, ERL_NIF_TERM term, TERM &var)
 {
     var = TERM(term);
     return 1;
@@ -207,7 +261,7 @@ inline TERM make(ErlNifEnv *, const TERM term)
 }
 
 // str_atom
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, str_atom &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, str_atom &var)
 {
     unsigned len;
     int ret = enif_get_atom_length(env, term, &len, ERL_NIF_LATIN1);
@@ -224,10 +278,20 @@ inline TERM make(ErlNifEnv *env, const str_atom &var)
     return TERM(enif_make_atom(env, var.c_str()));
 }
 
+// atom
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, atom &var)
+{
+    return var.init(env, term);
+}
+inline TERM make(ErlNifEnv *, const atom &var)
+{
+    assert(var.initialized());
+    return TERM(var);
+}
 
 
 // std::string
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
 {
     // The implementation below iterates through the list twice.  It may
     // be faster to iterate through the list and append bytes one at a time.
@@ -271,7 +335,7 @@ inline TERM make(ErlNifEnv *env, const std::string &var)
 
 
 // bool
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, bool &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, bool &var)
 {
     char buf[6]; // max( len("true"), len("false")) + 1
 
@@ -299,7 +363,7 @@ inline TERM make(ErlNifEnv *env, const bool var)
 
 // Number conversions
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, double &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, double &var)
 {
     return enif_get_double(env, term, &var);
 }
@@ -309,7 +373,7 @@ inline TERM make(ErlNifEnv *env, const double var)
 }
 
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, int &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, int &var)
 {
     return enif_get_int(env, term, &var);
 }
@@ -319,7 +383,7 @@ inline TERM make(ErlNifEnv *env, const int var)
 }
 
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, unsigned int &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, unsigned int &var)
 {
     return enif_get_uint(env, term, &var);
 }
@@ -329,7 +393,7 @@ inline TERM make(ErlNifEnv *env, const unsigned int var)
 }
 
 #if SIZEOF_LONG != 8
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifSInt64 &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifSInt64 &var)
 {
     return enif_get_int64(env, term, &var);
 }
@@ -338,7 +402,7 @@ inline TERM make(ErlNifEnv *env, const ErlNifSInt64 var)
     return TERM(enif_make_int64(env, var));
 }
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifUInt64 &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifUInt64 &var)
 {
     return enif_get_uint64(env, term, &var);
 }
@@ -349,7 +413,7 @@ inline TERM make(ErlNifEnv *env, const ErlNifUInt64 var)
 #endif
 
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, long &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, long &var)
 {
     return enif_get_long(env, term, &var);
 }
@@ -358,7 +422,7 @@ inline TERM make(ErlNifEnv *env, const long var)
     return TERM(enif_make_long(env, var));
 }
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, unsigned long &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, unsigned long &var)
 {
     return enif_get_ulong(env, term, &var);
 }
@@ -370,7 +434,7 @@ inline TERM make(ErlNifEnv *env, const unsigned long var)
 
 // binary and ErlNifBinary
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary &var)
 {
     return enif_inspect_binary(env, term, &var);
 }
@@ -387,7 +451,7 @@ inline TERM make(ErlNifEnv *env, binary &var)
 
 // ErlNifPid
 
-inline int get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
 {
     return TERM(enif_get_local_pid(env, term, &var));
 }
@@ -405,7 +469,7 @@ inline TERM make(ErlNifEnv *env, const ErlNifPid &var)
 
 // forward declarations for friend statements
 template<class T> class resource_ptr;
-template<typename T> int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var);
+template<typename T> bool get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var);
 template<typename T, typename ...Args> resource_ptr<T> construct_resource(Args&&... args);
 
 template<class T> class resource_ptr
@@ -432,7 +496,7 @@ private:
     template<typename U, typename ...Args>
     friend resource_ptr<U> construct_resource(Args&&... args);
     template<typename U>
-    friend int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<U> &var);
+    friend bool get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<U> &var);
     // I would have liked to specialize these to T instead of granting access
     // to all U, but this is just simpler.
 
@@ -632,7 +696,7 @@ http://stackoverflow.com/questions/19366615/static-member-variable-in-class-temp
 } // namespace detail (resource detail)
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var)
 {
     void *rawptr;
     if(!enif_get_resource(env, term, detail::resource_data<T>::type, &rawptr))
@@ -641,7 +705,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var)
     return 1;
 }
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, T* &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, T* &var)
 {
     return enif_get_resource(env, term, detail::resource_data<T>::type, (void**)&var);
 }
@@ -749,7 +813,7 @@ namespace detail
 } // namespace detail
 
 template<typename ...Ts>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
 {
     int arity;
     const ERL_NIF_TERM *array;
@@ -768,7 +832,7 @@ int get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
 }
 
 template<typename T1, typename T2>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::pair<T1, T2>& var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::pair<T1, T2>& var)
 {
     int arity;
     const ERL_NIF_TERM *array;
@@ -824,7 +888,7 @@ TERM make(ErlNifEnv *env, const std::pair<T1, T2>& var)
 /*
   Disabling for now.  These feel too "loose".  Just use an explicit tuple
 template<typename T0, typename T1, typename ...Ts>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, T0 &t0, T1 &t1, Ts&... ts)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, T0 &t0, T1 &t1, Ts&... ts)
 {
     auto tup = std::tie(t0, t1, ts...);
     return get(env, term, tup);
@@ -874,7 +938,7 @@ int list_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
 }
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var)
 {
     unsigned len;
     int ret = enif_get_list_length(env, term, &len);
@@ -900,7 +964,7 @@ inline TERM make(ErlNifEnv *env, const std::vector<TERM> &var)
 
 
 template<typename T, size_t N>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var)
 {
     unsigned len;
     int ret = enif_get_list_length(env, term, &len);
@@ -931,7 +995,7 @@ TERM make(ErlNifEnv *env, const std::array<TERM, N> &var)
 
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::list<T> &var)
 {
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.push_back(item);});
@@ -950,7 +1014,7 @@ TERM make(ErlNifEnv *env, const std::list<T> &var)
 
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::deque<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::deque<T> &var)
 {
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.push_back(item);});
@@ -968,7 +1032,7 @@ TERM make(ErlNifEnv *env, const std::deque<T> &var)
 }
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::set<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::set<T> &var)
 {
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.insert(item);});
@@ -986,7 +1050,7 @@ TERM make(ErlNifEnv *env, const std::set<T> &var)
 }
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_set<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_set<T> &var)
 {
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.insert(item);});
@@ -1004,7 +1068,7 @@ TERM make(ErlNifEnv *env, const std::unordered_set<T> &var)
 }
 
 template<typename T>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::multiset<T> &var)
 {
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.insert(item);});
@@ -1050,7 +1114,7 @@ int map_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
 
 
 template<typename TK, typename TV>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::map<TK,TV> &var)
 {
     var.clear();
     return map_for_each<TK,TV>(env, term, [&var](TK key, TV value){var[key]=value;});
@@ -1068,7 +1132,7 @@ TERM make(ErlNifEnv *env, const std::map<TK,TV> &var)
 }
 
 template<typename TK, typename TV>
-int get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var)
+bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::unordered_map<TK,TV> &var)
 {
     var.clear();
     return map_for_each<TK,TV>(env, term, [&var](TK key, TV value){var[key]=value;});
