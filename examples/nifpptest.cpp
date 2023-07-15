@@ -416,7 +416,7 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
 
 extern "C" {
 
-static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
+static int load(ErlNifEnv* env, [[maybe_unused]] void** priv, ERL_NIF_TERM load_info)
 {
     register_resource<std::string>(env, nullptr, "std::string");
     register_resource<int>(env, nullptr, "int");

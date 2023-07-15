@@ -1,5 +1,5 @@
 -module(tuple_twiddle_cpp).
--export([twiddle/1]).
+-export([twiddle/1, test/0]).
 -on_load(init/0).
 
 init() ->
@@ -7,3 +7,6 @@ init() ->
 
 twiddle(_T) ->
     exit(nif_library_not_loaded).
+
+test() ->
+    twiddle({{1, 2}, 3, atom}).
