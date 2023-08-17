@@ -105,7 +105,7 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
     nifpp::TERM cmddata;
     auto cmdtup=std::tie(cmd,cmddata);
     get_throws(env, term, cmdtup);
-    cout << "cmd = " << cmd << endl;
+    cout << "cmd = " << cmd << "\r\n";
     if(cmd=="atom2")
     {
         str_atom in;
@@ -229,6 +229,17 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
         e*=2;
 
         return make(env, tup);
+    }
+    else if(cmd=="tuple2d")
+    {
+        // test wrong data passing in a duple
+        // double each member of {"abc", 1, 500.0}
+        int a;
+        std::string b;
+        double e;
+
+        auto tup = tie(a,b,e);
+        return make(env, get(env, cmddata, tup));
     }
 //    else if(cmd=="tuple2d")
 //    {
@@ -409,14 +420,14 @@ ERL_NIF_TERM nif_main(ErlNifEnv* env, nifpp::TERM term)
         return make(env,out);
     }
 #endif
-    cout << "cmd no match" << endl;
+    cout << "cmd no match\r\n";
     return enif_make_badarg(env);
 }
 
 
 extern "C" {
 
-static int load(ErlNifEnv* env, [[maybe_unused]] void** priv, ERL_NIF_TERM load_info)
+static int load(ErlNifEnv* env, [[maybe_unused]] void** priv, [[maybe_unused]] ERL_NIF_TERM load_info)
 {
     register_resource<std::string>(env, nullptr, "std::string");
     register_resource<int>(env, nullptr, "int");
@@ -424,7 +435,7 @@ static int load(ErlNifEnv* env, [[maybe_unused]] void** priv, ERL_NIF_TERM load_
     return 0;
 }
 
-static ERL_NIF_TERM invoke_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+static ERL_NIF_TERM invoke_nif(ErlNifEnv* env, [[maybe_unused]] int argc, const ERL_NIF_TERM argv[])
 {
     try
     {
@@ -436,7 +447,8 @@ static ERL_NIF_TERM invoke_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     }
 }
 
-static ERL_NIF_TERM foo_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+/*
+static ERL_NIF_TERM foo_nif(ErlNifEnv* env, [[maybe_unused]] int argc, const ERL_NIF_TERM argv[])
 {
     int x, ret;
     if (!enif_get_int(env, argv[0], &x)) {
@@ -446,7 +458,7 @@ static ERL_NIF_TERM foo_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return enif_make_int(env, ret);
 }
 
-static ERL_NIF_TERM bar_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+static ERL_NIF_TERM bar_nif(ErlNifEnv* env, [[maybe_unused]] int argc, const ERL_NIF_TERM argv[])
 {
     int y, ret;
     if (!enif_get_int(env, argv[0], &y)) {
@@ -455,9 +467,12 @@ static ERL_NIF_TERM bar_nif(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     ret = y*3;
     return enif_make_int(env, ret);
 }
+*/
 
 static ErlNifFunc nif_funcs[] = {
-    {"invoke_nif", 1, invoke_nif},
+    {"invoke_nif", 1, invoke_nif, 0},
+    //{"foo_nif",    1, foo_nif,    0},
+    //{"bar_nif",    1, bar_nif,    0},
 };
 
 ERL_NIF_INIT(nifpptest, nif_funcs, load, NULL, NULL, NULL)

@@ -9,4 +9,4 @@ twiddle(_T) ->
     exit(nif_library_not_loaded).
 
 test() ->
-    twiddle({{1, 2}, 3, atom}).
+    {3, {1, 2}} = twiddle({{1, 2}, 3}).
