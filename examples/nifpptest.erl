@@ -13,7 +13,7 @@ invoke_nif(_X) ->
 start() ->
     test(),
     benchmark(),
-    init:stop().
+    halt(0).
 
 do_times(_F, 0) ->
     ok;
@@ -114,7 +114,9 @@ tuple_test_() ->
         ?_assertEqual( {246, "abcabc", 1000.0},
                 invoke_nif({tuple2b, {123, "abc", 500.0}})),
         ?_assertEqual( {246, "abcabc", {xyzxyz, 912}, 1000.0},
-                invoke_nif({tuple2c, {123, "abc", {xyz, 456}, 500.0}}))
+                invoke_nif({tuple2c, {123, "abc", {xyz, 456}, 500.0}})),
+        ?_assertNot(
+                invoke_nif({tuple2d, {"abc", 1, 500.0}}))
 %%        ?_assertEqual( {246, "abcabc", 1000.0},
 %%                invoke_nif({tuple2d, {123, "abc", 500.0}})),
 %%        ?_assertEqual( {246, "abcabc", {xyzxyz, 912}, 1000.0},
@@ -208,23 +210,20 @@ intres_test_() ->
     ].
 
 tracetyperes_test_() ->
+    Temp = fun() ->
+        Rs = [ invoke_nif({tracetype_create,[]}) || _X <- lists:seq(1,10) ],
+        ?assertEqual({10,0}, invoke_nif({tracetype_getcnts,[]})),
+        erlang:garbage_collect(),
+        ?assertEqual({10,0}, invoke_nif({tracetype_getcnts,[]})),
+        Rs % Rs gets collected above if this is not present
+    end,
     [
-        fun() ->
-            ?assertEqual(ok, invoke_nif({tracetype_reset,[]})),
-            ?assertEqual({0,0}, invoke_nif({tracetype_getcnts,[]})),
-            Temp = fun() ->
-                Rs = [ invoke_nif({tracetype_create,[]}) || _X <- lists:seq(1,10) ],
-                ?assertEqual({10,0}, invoke_nif({tracetype_getcnts,[]})),
-                erlang:garbage_collect(),
-                ?assertEqual({10,0}, invoke_nif({tracetype_getcnts,[]})),
-                Rs % Rs gets collected above if this is not present
-                
-                end,
-            Temp(),
-            erlang:garbage_collect(),
-            ?assertEqual({10,10}, invoke_nif({tracetype_getcnts,[]}))
-        end
-        ].
+        ?_assertEqual(ok, invoke_nif({tracetype_reset,[]})),
+        ?_assertEqual({0,0}, invoke_nif({tracetype_getcnts,[]})),
+        Temp,
+        ?_test(erlang:garbage_collect()),
+        ?_assertEqual({10,10}, invoke_nif({tracetype_getcnts,[]}))
+    ].
         
 bin_test_() ->
     [

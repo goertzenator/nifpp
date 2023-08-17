@@ -36,7 +36,7 @@ tuple_twiddle_cpp.so: tuple_twiddle_cpp.cpp ../nifpp.h
 	erlc $<
 
 test: all
-	erl -s nifpptest
+	erl -noshell -noinput -s nifpptest
 
 clean:
 	rm -f *.so *.beam *.o

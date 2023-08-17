@@ -27,7 +27,13 @@
 #ifndef NIFPP_H
 #define NIFPP_H
 
+// Suppress warning
+// erlang/26.0/erts-14.0/include/erl_nif.h:192:21: warning: comma at end of enumerator list [-Wpedantic]
+//  192 |     ERL_NIF_UTF8 = 2,
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <erl_nif.h>
+#pragma GCC diagnostic pop
 
 // Only define map functions if they are available
 #define NIFPP_HAS_MAPS ((ERL_NIF_MAJOR_VERSION > 2) || (ERL_NIF_MAJOR_VERSION==2 && ERL_NIF_MINOR_VERSION >= 6))
@@ -122,6 +128,14 @@ public:
     bool operator!=(const atom&  rhs) const { return !enif_is_identical(val, rhs.val); }
 
     operator ERL_NIF_TERM() const { return val; }
+
+    std::string to_string(ErlNifEnv* env, ErlNifCharEncoding encoding = ERL_NIF_LATIN1) const
+    {
+        assert(val);
+        char buf[256];
+        enif_get_atom(env, val, buf, sizeof(buf), encoding);
+        return buf;
+    }
 private:
     ERL_NIF_TERM val;
 };
@@ -171,14 +185,7 @@ public:
     //binary(): needs_release(false) {}
     explicit binary(size_t _size)
     {
-        if(enif_alloc_binary(_size, this))
-        {
-            needs_release=true;
-        }
-        else
-        {
-            needs_release=false;
-        }
+        needs_release = enif_alloc_binary(_size, this);
     }
 
 #ifdef NIFPP_INTRUSIVE_UNIT_TEST
@@ -253,7 +260,7 @@ template<typename TK, typename TV> TERM make(ErlNifEnv *env, const std::unordere
 inline bool get(ErlNifEnv *, ERL_NIF_TERM term, TERM &var)
 {
     var = TERM(term);
-    return 1;
+    return true;
 }
 inline TERM make(ErlNifEnv *, const TERM term)
 {
@@ -261,17 +268,16 @@ inline TERM make(ErlNifEnv *, const TERM term)
 }
 
 // str_atom
-inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, str_atom &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, str_atom &var, ErlNifCharEncoding encoding = ERL_NIF_LATIN1)
 {
     unsigned len;
-    int ret = enif_get_atom_length(env, term, &len, ERL_NIF_LATIN1);
-    if(!ret) return 0;
+    int ret = enif_get_atom_length(env, term, &len, encoding);
+    if(!ret) [[unlikely]] return false;
     var.resize(len+1); // +1 for terminating null
-    ret =  enif_get_atom(env, term,
-                         &(*(var.begin())), var.size(), ERL_NIF_LATIN1);
-    if(!ret) return 0;
+    ret =  enif_get_atom(env, term, var.data(), var.size(), encoding);
+    if(!ret) [[unlikely]] return false;
     var.resize(len); // trim terminating null
-    return 1;
+    return true;
 }
 inline TERM make(ErlNifEnv *env, const str_atom &var)
 {
@@ -291,7 +297,7 @@ inline TERM make(ErlNifEnv *, const atom &var)
 
 
 // std::string
-inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
+inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var, ErlNifCharEncoding encoding = ERL_NIF_LATIN1)
 {
     // The implementation below iterates through the list twice.  It may
     // be faster to iterate through the list and append bytes one at a time.
@@ -303,16 +309,16 @@ inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
         // not a list, try as binary
         ErlNifBinary bin;
         ret = enif_inspect_binary(env, term, &bin);
-        if(!ret)
+        if(!ret) [[unlikely]]
         {
             // not a binary either, so fail.
-            return 0;
+            return false;
         }
         var = std::string((const char*)bin.data, bin.size);
         return ret;
     }
     var.resize(len+1); // +1 for terminating null
-    ret =  enif_get_string(env, term, &*(var.begin()), var.size(), ERL_NIF_LATIN1); // full list iteration
+    ret =  enif_get_string(env, term, var.data(), var.size(), encoding); // full list iteration
     if(ret > 0)
     {
         var.resize(ret-1); // trim terminating null
@@ -328,9 +334,9 @@ inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::string &var)
     }
     return ret;
 }
-inline TERM make(ErlNifEnv *env, const std::string &var)
+inline TERM make(ErlNifEnv *env, const std::string &var, ErlNifCharEncoding encoding = ERL_NIF_LATIN1)
 {
-    return TERM(enif_make_string_len(env, &(*(var.begin())), var.size(), ERL_NIF_LATIN1));
+    return TERM(enif_make_string_len(env, var.data(), var.size(), encoding));
 }
 
 
@@ -339,8 +345,8 @@ inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, bool &var)
 {
     char buf[6]; // max( len("true"), len("false")) + 1
 
-    if(!enif_get_atom(env, term, buf, sizeof(buf), ERL_NIF_LATIN1))
-        return 0;
+    if(!enif_get_atom(env, term, buf, sizeof(buf), ERL_NIF_LATIN1)) [[unlikely]]
+        return false;
 
     if(strcmp(buf, "true")==0)
     {
@@ -353,7 +359,7 @@ inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, bool &var)
         return 1;
     }
 
-    return 0; // some other atom, return error
+    return false; // some other atom, return error
 }
 inline TERM make(ErlNifEnv *env, const bool var)
 {
@@ -458,7 +464,10 @@ inline bool get(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifPid &var)
 
 inline TERM make(ErlNifEnv *env, const ErlNifPid &var)
 {
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wignored-qualifiers"
     return TERM(enif_make_pid(env, &var));
+    #pragma GCC diagnostic pop
 }
 
 
@@ -699,10 +708,10 @@ template<typename T>
 bool get(ErlNifEnv *env, ERL_NIF_TERM term, resource_ptr<T> &var)
 {
     void *rawptr;
-    if(!enif_get_resource(env, term, detail::resource_data<T>::type, &rawptr))
-        return 0;
+    if(!enif_get_resource(env, term, detail::resource_data<T>::type, &rawptr)) [[unlikely]]
+        return false;
     var=resource_ptr<T>((T*)rawptr, true);
-    return 1;
+    return true;
 }
 template<typename T>
 bool get(ErlNifEnv *env, ERL_NIF_TERM term, T* &var)
@@ -722,7 +731,7 @@ TERM make_resource_binary(ErlNifEnv *env, const resource_ptr<T> &var, const void
 
 
 template<typename T>
-int register_resource(ErlNifEnv* env,
+bool register_resource(ErlNifEnv* env,
                       const char* module_str,
                       const char* name,
                       ErlNifResourceFlags flags = ErlNifResourceFlags(ERL_NIF_RT_CREATE|ERL_NIF_RT_TAKEOVER),
@@ -738,12 +747,12 @@ int register_resource(ErlNifEnv* env,
     if(!type)
     {
         detail::resource_data<T>::type = 0;
-        return 0;
+        return false;
     }
     else
     {
         detail::resource_data<T>::type = type;
-        return 1;
+        return true;
     }
 }
 
@@ -781,37 +790,6 @@ resource_ptr<T> construct_resource(Args&&... args)
 
 // tuple
 
-namespace detail
-{
-
-//    I would have liked to implement the template below as only a function,
-//    but partial specialization of template functions is not permitted. Hence
-//    the weird stuct/function composite.
-
-    template<int I>
-    struct array_to_tupler
-    {
-        template<typename ...Ts>
-        static int go(ErlNifEnv *env, std::tuple<Ts...> &t, const ERL_NIF_TERM *end)
-        {
-            end--;
-            if(!array_to_tupler<I-1>::go(env, t, end))
-                return 0;
-            return get(env, *end, std::get<I-1>(t));
-        }
-    };
-
-    template<>
-    struct array_to_tupler<0>
-    {
-        template<typename ...Ts>
-        static int go(ErlNifEnv *, std::tuple<Ts...> &, const ERL_NIF_TERM *)
-        {
-            return 1;
-        }
-    };
-} // namespace detail
-
 template<typename ...Ts>
 bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
 {
@@ -824,11 +802,13 @@ bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::tuple<Ts...> &var)
         return ret;
 
     // check for matching arity
-    if(size_t(arity) != std::tuple_size<std::tuple<Ts...>>::value)
-        return 0;
+    if(size_t(arity) != sizeof...(Ts)) [[unlikely]]
+        return false;
 
-    // invoke recursive template to convert all items of tuple
-    return detail::array_to_tupler<std::tuple_size<std::tuple<Ts...>>::value>::go(env, var, array+arity);
+    auto res = true;
+    auto set = [env, &res, &array](auto&& x) { res &= get(env, *array++, x); };
+    std::apply([&set](auto&&... arg) { (set(std::forward<decltype(arg)>(arg)), ...); }, var);
+    return res;
 }
 
 template<typename T1, typename T2>
@@ -839,49 +819,25 @@ bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::pair<T1, T2>& var)
     int ret = enif_get_tuple(env, term, &arity, &array);
 
     // check if tuple of size 2
-    if(!ret || arity != 2)
-        return 0;
+    if(!ret || arity != 2) [[unlikely]]
+        return false;
     return get(env, array[0], var.first) && get(env, array[1], var.second);
 }
-
-
-namespace detail
-{
-    template<int I>
-    struct tuple_to_arrayer
-    {
-        template<typename ...Ts>
-        static void go(ErlNifEnv *env, const std::tuple<Ts...> &t, ERL_NIF_TERM *end)
-        {
-            tuple_to_arrayer<I-1>::go(env, t, --end);
-            *end = make(env, std::get<I-1>(t));
-        }
-    };
-
-    template<>
-    struct tuple_to_arrayer<0>
-    {
-        template<typename ...Ts>
-        static void go(ErlNifEnv *, const std::tuple<Ts...> &, ERL_NIF_TERM *)
-        {}
-    };
-} // namespace detail
 
 
 template<typename ...Ts>
 TERM make(ErlNifEnv *env, const std::tuple<Ts...> &var)
 {
-    std::array<ERL_NIF_TERM, std::tuple_size<std::tuple<Ts...>>::value> array;
-    detail::tuple_to_arrayer<std::tuple_size<std::tuple<Ts&...>>::value>::go(env, var, array.end());
+    std::array<ERL_NIF_TERM, sizeof...(Ts)> array;
+    auto it = array.begin();
+    std::apply([env, &it](auto&&... x) { ((*it++ = make(env, x)), ...); }, var);
     return TERM(enif_make_tuple_from_array(env, array.begin(), array.size()));
 }
 
 template<typename T1, typename T2>
 TERM make(ErlNifEnv *env, const std::pair<T1, T2>& var)
 {
-    std::array<ERL_NIF_TERM, 2> array;
-    array[0] = make(env, var.first);
-    array[1] = make(env, var.second);
+    std::array<ERL_NIF_TERM, 2> array{ make(env, var.first), make(env, var.second)};
     return TERM(enif_make_tuple_from_array(env, array.begin(), array.size()));
 }
 
@@ -923,18 +879,17 @@ int niftuple_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
 // list
 
 template<typename T=ERL_NIF_TERM, typename F>
-int list_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
+bool list_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
 {
-    if(!enif_is_list(env, term)) return 0;
-    ERL_NIF_TERM head, tail;
-    tail = term;
+    if(!enif_is_list(env, term)) [[unlikely]] return false;
+    ERL_NIF_TERM head, tail = term;
     while(enif_get_list_cell(env, tail, &head, &tail))
     {
         T var;
-        if(!get(env, head, var)) return 0; // conversion failure
+        if(!get(env, head, var)) [[unlikely]] return false; // conversion failure
         f(std::move(var));
     }
-    return 1;
+    return true;
 }
 
 template<typename T>
@@ -942,7 +897,7 @@ bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::vector<T> &var)
 {
     unsigned len;
     int ret = enif_get_list_length(env, term, &len);
-    if(!ret) return 0;
+    if(!ret) [[unlikely]] return false;
     var.clear();
     return list_for_each<T>(env, term, [&var](T item){var.push_back(item);});
 }
@@ -968,10 +923,10 @@ bool get(ErlNifEnv *env, ERL_NIF_TERM term, std::array<T, N> &var)
 {
     unsigned len;
     int ret = enif_get_list_length(env, term, &len);
-    if(!ret) return 0;
+    if(!ret) [[unlikely]] return false;
 
     // arrays are statically sized so size must match.
-    if(size_t(len) != var.size()) return 0;
+    if(size_t(len) != var.size()) [[unlikely]] return false;
 
     int i=0;
     return list_for_each<T>(env, term, [&var, &i](T item){var[i++] = item;});
@@ -1087,7 +1042,7 @@ TERM make(ErlNifEnv *env, const std::multiset<T> &var)
 
 #if NIFPP_HAS_MAPS
 template<typename TK, typename TV, typename F>
-int map_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
+bool map_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
 {
     ErlNifMapIterator iter;
 
@@ -1105,11 +1060,11 @@ int map_for_each(ErlNifEnv *env, ERL_NIF_TERM term, const F &f)
         enif_map_iterator_next(env, &iter);
     }
     enif_map_iterator_destroy(env, &iter);
-    return 1;
+    return true;
 
     error:
     enif_map_iterator_destroy(env, &iter);
-    return 0;
+    return false;
 }
 
 
